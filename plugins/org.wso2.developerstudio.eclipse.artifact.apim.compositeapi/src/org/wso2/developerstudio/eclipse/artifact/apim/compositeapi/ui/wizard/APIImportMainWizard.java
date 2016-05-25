@@ -21,6 +21,11 @@ import java.util.regex.Pattern;
 
 
 import org.wso2.developerstudio.eclipse.utils.file.FileUtils;
+
+import io.swagger.models.Swagger;
+import io.swagger.parser.SwaggerParser;
+import io.swagger.parser.util.SwaggerDeserializationResult;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -125,7 +130,7 @@ public class APIImportMainWizard extends AbstractWSO2ProjectCreationWizard {
         
         //Adding imported APIs to the project
         for (API api : selectedAPIs){
-        	String content = CompositeAPIUtils.getApiSwaggerDefinition(api.getId());
+        	String content = CompositeAPIUtils.getApiSwaggerDefinition(api);
         	File destFile = new File(selectedProject.getFolder("src").getFolder("main").getFolder("Primary APIs").getLocation().toFile(),
                     api.getName() + "-" + api.getVersion() + ".yaml");
             try {

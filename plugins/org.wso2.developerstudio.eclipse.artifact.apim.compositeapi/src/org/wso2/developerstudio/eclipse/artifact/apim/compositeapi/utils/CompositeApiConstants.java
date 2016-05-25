@@ -8,6 +8,7 @@ public class CompositeApiConstants extends NLS {
 
 	// project wizard page properties
 	public static String WIZARD_OPTION_PROJECT_NAME;
+	public static String WIZARD_OPTION_PROJECT_CONTEXT;
 	public static String WIZARD_OPTION_PROJECT_LOCATION;
 	public static String COMP_API_DIR;
 	public static String WIZARD_WINDOW_TITLE;

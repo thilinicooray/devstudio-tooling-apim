@@ -10,6 +10,7 @@ public class CompositeApiModel extends ProjectDataModel {
 	
 	private File compositeApiProjectLocation;
 	private String compositeApiProjectName;
+	private String compositeApiContext;
 
 	public String getCompositeApiProjectName() {
 		return compositeApiProjectName;
@@ -17,6 +18,14 @@ public class CompositeApiModel extends ProjectDataModel {
 
 	public void setCompositeApiProjectName(String compositeApiProjectName) {
 		this.compositeApiProjectName = compositeApiProjectName;
+	}
+
+	public String getCompositeApiContext() {
+		return compositeApiContext;
+	}
+
+	public void setCompositeApiContext(String context) {
+		this.compositeApiContext = context;
 	}
 	
 	public void setCompositeApiProjectLocation(File compositeApiProjectLocation) {
@@ -33,6 +42,8 @@ public class CompositeApiModel extends ProjectDataModel {
 			modelPropertyValue = getCompositeApiProjectName();
 		}else if(key.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_LOCATION)){
 			modelPropertyValue = getCompositeApiProjectLocation();
+		} else if(key.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_CONTEXT)){
+			modelPropertyValue = getCompositeApiContext();
 		}
 		return modelPropertyValue;
 	}
@@ -44,6 +55,8 @@ public class CompositeApiModel extends ProjectDataModel {
 			setCompositeApiProjectLocation(new File(data.toString()));
 		} else if (key.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_NAME)) {
 			setCompositeApiProjectName(data.toString());
+		} else if (key.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_CONTEXT)) {
+			setCompositeApiContext(data.toString());
 		}
 		return returnValue;
 	}

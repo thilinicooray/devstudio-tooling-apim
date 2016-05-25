@@ -11,6 +11,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.e4.core.services.events.IEventBroker;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
@@ -29,9 +30,12 @@ import org.wso2.developerstudio.eclipse.utils.project.ProjectUtils;
 
 import io.swagger.models.Info;
 import io.swagger.models.Swagger;
+import io.swagger.models.parameters.Parameter;
 import io.swagger.util.Json;
 import io.swagger.util.Yaml;
 
+import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.internal.communication.AddResourceRequest;
+import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.internal.communication.SetCompApiContextRequest;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.model.CompositeApiModel;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.utils.CompositeApiConstants;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.utils.CompositeApiImageUtils;
@@ -46,7 +50,7 @@ public class CompositeApiProjectCreationWizard extends
 	private IProject compositeAPIProject;
 	private File pomfile;
 	private IFile swaggerFile;
-	//private File swaggerFile;
+	private IEventBroker iflowEB;
 	private List<File> fileList = new ArrayList<File>();
 
 	// private Map<File,AnalyticsEntryTypes> artifactList = new
@@ -71,7 +75,9 @@ public class CompositeApiProjectCreationWizard extends
 			
 			//Add definition files to the project
 			addInitialSwaggerDefinition(compositeApiModel.getCompositeApiProjectName() + ".yaml");
-			addAPIDefinitionstoProject("composite_api.iflow",compositeApiModel.getCompositeApiProjectName() + ".iflow");
+			addAPIDefinitionstoProject(compositeApiModel.getCompositeApiProjectName() + ".iflow");
+			
+			setCompositeApiContext(compositeApiModel.getCompositeApiContext());
 			
 			swaggerFile = compositeAPIProject.getFolder("src").getFolder("main").getFile(new Path(compositeApiModel.getCompositeApiProjectName() + ".yaml"));
 			//Creating the metadata file artifact.xml while creating the Analytics project. 
@@ -151,6 +157,15 @@ public class CompositeApiProjectCreationWizard extends
 		return true;
 	}
 	
+	private void setCompositeApiContext(String compositeApiContext) {
+		if (iflowEB == null) {
+			iflowEB = (IEventBroker) PlatformUI.getWorkbench().getService(IEventBroker.class);
+        }
+		iflowEB.send("compApiContext",
+                new SetCompApiContextRequest(compositeApiContext));
+		
+	}
+
 	public CompositeApiModel getCompositeApiModel() {
 		return compositeApiModel;
 	}
@@ -171,15 +186,14 @@ public class CompositeApiProjectCreationWizard extends
 		return compositeAPIProject;
 	}
 	
-	private void addAPIDefinitionstoProject(String templateName, String fileName) {
-		File compositeApiTemplateFile;
+	private void addAPIDefinitionstoProject(String fileName) {
+		
 		File destFile = new File(compositeAPIProject.getFolder("src").getFolder("main").getLocation().toFile(),
                 fileName);
         try {
-        	 compositeApiTemplateFile = new CompositeApiTemplateUtils().getResourceFile("templates" + File.separator
-                         + templateName);
+        	 
              
-             String templateContent = FileUtils.getContentAsString(compositeApiTemplateFile);
+             String templateContent = "";
              FileUtils.createFile(destFile, templateContent);
              fileList.add(destFile);
 		} catch (IOException e) {
@@ -195,8 +209,9 @@ public class CompositeApiProjectCreationWizard extends
         	Swagger swagger = new Swagger();
         	Info info = new Info();
         	info.setTitle(compositeAPIProject.getName());
-        	swagger.setInfo(info);
         	
+        	swagger.setInfo(info);
+        	swagger.setVendorExtension("x-context", compositeApiModel.getCompositeApiContext());
         	String swaggerContent = Yaml.pretty().writeValueAsString(swagger);;
              FileUtils.createFile(destFile, swaggerContent);
              fileList.add(destFile);

@@ -37,6 +37,10 @@ import org.json.JSONObject;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.model.API;
 import org.yaml.snakeyaml.Yaml;
 
+import io.swagger.models.Swagger;
+import io.swagger.parser.SwaggerParser;
+import io.swagger.parser.util.SwaggerDeserializationResult;
+
 public class CompositeAPIUtils {
 	//Implemented for km url == gw url
 	private static String consumeKey;
@@ -168,7 +172,7 @@ public class CompositeAPIUtils {
         return dataMap;
     }
 	
-	public static String getApiSwaggerDefinition(String apiId){
+	public static String getApiSwaggerDefinition(API api){
 		Map<String, String> dataMap = new HashMap<String, String>();
 		dataMap.put("consumerKey", consumeKey);
         dataMap.put("consumerSecret", consumerSecret);
@@ -177,20 +181,24 @@ public class CompositeAPIUtils {
         
         //List<API> apis = new ArrayList<API>();
 		try{
-		URL apiEndpointURL = new URL(storeUrl + "/api/am/store/v0.9/apis/" + apiId + "/swagger" );
+		URL apiEndpointURL = new URL(storeUrl + "/api/am/store/v0.9/apis/" + api.getId() + "/swagger" );
 		HashMap<String, String> accessKeyMap = new HashMap<String, String>();
 		accessKeyMap.put("Authorization", "Bearer " + accessToken);
 		HTTPResponse response = doGet(apiEndpointURL, accessKeyMap);
 		
 		JSONObject apiJsonObject = new JSONObject(response);
 		JSONObject responseContent = new JSONObject(apiJsonObject.get("data").toString());
+		 String prettyJSONString = responseContent.toString();
+		SwaggerDeserializationResult swaggerDeserialized = new SwaggerParser().readWithInfo(prettyJSONString);
+		Swagger swaggerContent = swaggerDeserialized.getSwagger();
+		swaggerContent.setVendorExtension("x-context", api.getContext());
 		Yaml yaml = new Yaml();
 		  // get json string
-		  String prettyJSONString = responseContent.toString();
+		 
 		  // mapping
 		  Map<String,Object> map = (Map<String, Object>) yaml.load(prettyJSONString);
 		  // convert to yaml string (yaml formatted string)
-		  String output = yaml.dump(map);
+		  String output = io.swagger.util.Yaml.pretty().writeValueAsString(swaggerContent);
 		  return output;
 		
 		}catch(Exception e){

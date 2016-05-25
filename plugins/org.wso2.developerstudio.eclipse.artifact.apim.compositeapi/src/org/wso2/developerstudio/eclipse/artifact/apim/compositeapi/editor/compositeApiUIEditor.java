@@ -3,8 +3,10 @@ package org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.osgi.service.event.EventHandler;
 
@@ -62,7 +64,11 @@ import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.Models
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.Models.TreeMember;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.Models.UriTemplate;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.internal.communication.AddResourceRequest;
+import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.internal.communication.AddSubApiResourceRequest;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.internal.communication.ImportStoreApiRequest;
+import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.internal.communication.SetCompApiContextRequest;
+import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.internal.communication.WriteIflowRequest;
+import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.utils.CompositeApiIFlowGenerator;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.utils.CompositeApiSwaggerGenerator;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.utils.CompositeApiSwaggerParser;
 import org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.ui.wizard.APIImportMainWizard;
@@ -80,6 +86,7 @@ public class compositeApiUIEditor extends ApplicationWindow implements EventHand
 	private Composite composite1;
 	private static final String PROJECT_EXPLORER_PARTID = "org.eclipse.ui.navigator.ProjectExplorer";
 	private boolean isEditorModified = false;
+	CompositeApiIFlowGenerator iflowGenerator;
 	
 	public boolean isEditorModified() {
 		return isEditorModified;
@@ -95,6 +102,7 @@ public class compositeApiUIEditor extends ApplicationWindow implements EventHand
 	    addResourceEB = (IEventBroker) PlatformUI.getWorkbench().getService(IEventBroker.class);
 	    addResourceEB.subscribe("newAPIResource", this);
 	    addResourceEB.subscribe("importStoreApi", this);
+	    iflowGenerator = new CompositeApiIFlowGenerator();
 	  }
 	
 	/*public static void main(String[] args) {
@@ -216,7 +224,17 @@ public class compositeApiUIEditor extends ApplicationWindow implements EventHand
 			}
 		});
 		btnNewButton_2.setText("Remove");
-		new Label(composite, SWT.NONE);
+		
+		Button btnCreateIflow = new Button(composite, SWT.NONE);
+		btnCreateIflow.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				iflowGenerator.writeIflowtoFile();
+				/*addResourceEB.send("iflowFile",
+		                new WriteIflowRequest());*/
+			}
+		});
+		btnCreateIflow.setText("Generate Iflow");
 		new Label(composite, SWT.NONE);
 		new Label(composite, SWT.NONE);
 		new Label(composite, SWT.NONE);
@@ -251,6 +269,18 @@ public class compositeApiUIEditor extends ApplicationWindow implements EventHand
 		        	   receivingItem.add(selectedM1);
 		        	   refresh(treeViewer_1);
 		        	   isEditorModified = true;
+		        	   
+		        	   //Updating Iflow
+		        	   Map <String, String> addedsubApiDetails = new HashMap <String, String>();
+		        	   TreeMember addedMember = (TreeMember)selectedM1;
+		        	   Map <String, String> resourceDetails = addedMember.getProperties();
+		        	   addedsubApiDetails.put("apiName", resourceDetails.get("apiName"));
+		        	   addedsubApiDetails.put("endpoint", resourceDetails.get("context") + resourceDetails.get("pathString"));
+		        	   addedsubApiDetails.put("httpVerb", resourceDetails.get("httpVerb"));
+		        	   addedsubApiDetails.put("parameters", "Resource Parameters");
+		        	   addedsubApiDetails.put("response", "Resource Response");
+		        	   //addResourceEB.send("newsubApiResource", new AddSubApiResourceRequest(receivingItem.getName(), addedsubApiDetails));
+		        	   iflowGenerator.addSubApiResources(receivingItem.getName(), addedsubApiDetails);
 		        	 // treeViewer_1.add(selectedM2, selectedM1);
 		        	  //treeViewer_1.refresh();
 		        	  //treeViewer_1.getComparator().
@@ -531,6 +561,7 @@ public class compositeApiUIEditor extends ApplicationWindow implements EventHand
 	         	   receivingItem.add(temp1);
 	         	  isEditorModified = true;
 	         	  CompositeApiSwaggerGenerator.addNewResource(request.getUriTemplate(), request.getVerbs());
+	         	 iflowGenerator.addCompositeResource(request.getUriTemplate(), request.getVerbs());
 	         	   
 	         	  refresh(treeViewer_1);  
 	            } else if (eventObject instanceof ImportStoreApiRequest) {

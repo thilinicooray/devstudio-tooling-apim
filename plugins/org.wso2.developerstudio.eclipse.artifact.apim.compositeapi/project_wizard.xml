@@ -13,7 +13,7 @@
 				  description="Create a new Composite API" 
 				  error="Please give a name to the composite API">
 			<data modelProperty="project.name" type="string" fieldController="org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.validators.CompositeApiProjectFieldController">Composite API Name*</data>	  
-	
+			<data modelProperty="project.context" type="string" fieldController="org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.validators.CompositeApiProjectFieldController">Composite API Context*</data>
 			<projectNatures>
 				<nature>org.eclipse.jdt.core.javanature</nature>
 			</projectNatures>

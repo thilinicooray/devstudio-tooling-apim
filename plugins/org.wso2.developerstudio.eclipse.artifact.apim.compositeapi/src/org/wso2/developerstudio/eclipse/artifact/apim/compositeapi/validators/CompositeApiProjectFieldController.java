@@ -18,7 +18,7 @@ public class CompositeApiProjectFieldController extends AbstractFieldController 
 	        throws FieldValidationException {
 		if (modelProperty.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_NAME)) {
 			CommonFieldValidator.validateProjectField(value);
-		}else if (modelProperty.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_LOCATION)){
+		} else if (modelProperty.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_LOCATION)){
 			if (value == null) {
 				throw new FieldValidationException("Specified folder location is invalid");
 			}
@@ -32,6 +32,8 @@ public class CompositeApiProjectFieldController extends AbstractFieldController 
 					throw new FieldValidationException("Specified folder doesn't exist");
 				}	
 			}
+		} else if (modelProperty.equals(CompositeApiConstants.WIZARD_OPTION_PROJECT_CONTEXT)) {
+			CommonFieldValidator.validateProjectField(value);
 		}
 	}
 }

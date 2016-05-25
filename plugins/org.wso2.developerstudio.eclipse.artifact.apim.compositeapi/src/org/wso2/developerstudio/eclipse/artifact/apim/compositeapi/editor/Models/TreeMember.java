@@ -2,13 +2,22 @@ package org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.editor.Model
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TreeMember extends Model {
 	protected List resources;
 	protected List apis;
 	protected List uriTemplates;
 	protected List treeMembers;
+	protected Map <String, String> properties; 
 	
+	public Map<String, String> getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Map<String, String> properties) {
+		this.properties = properties;
+	}
 	private static IModelVisitor adder = new Adder();
 	private static IModelVisitor remover = new Remover();
 	
