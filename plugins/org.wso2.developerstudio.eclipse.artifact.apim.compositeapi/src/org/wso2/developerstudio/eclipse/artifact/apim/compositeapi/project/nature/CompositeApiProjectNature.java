@@ -28,7 +28,7 @@ public class CompositeApiProjectNature extends AbstractWSO2ProjectNature {
     private static IDeveloperStudioLog log = Logger.getLog(Activator.PLUGIN_ID);
 
     public void configure() throws CoreException {
-    	String[] childrenList = {"Primary APIs", "Meta-data"};
+    	String[] childrenList = {"Primary APIs"};
         IFolder parentFolder =
                 ProjectUtils.getWorkspaceFolder(getProject(), "src", "main");
         ProjectUtils.createFolder(parentFolder);

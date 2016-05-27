@@ -211,7 +211,8 @@ public class CompositeApiProjectCreationWizard extends
         	info.setTitle(compositeAPIProject.getName());
         	
         	swagger.setInfo(info);
-        	swagger.setVendorExtension("x-context", compositeApiModel.getCompositeApiContext());
+        	swagger.setBasePath("/" + compositeApiModel.getCompositeApiContext());
+        	//swagger.setVendorExtension("x-context", compositeApiModel.getCompositeApiContext());
         	String swaggerContent = Yaml.pretty().writeValueAsString(swagger);;
              FileUtils.createFile(destFile, swaggerContent);
              fileList.add(destFile);

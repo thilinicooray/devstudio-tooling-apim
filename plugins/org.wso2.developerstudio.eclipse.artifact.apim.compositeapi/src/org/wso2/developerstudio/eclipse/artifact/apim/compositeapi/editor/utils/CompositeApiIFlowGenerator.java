@@ -153,7 +153,7 @@ public class CompositeApiIFlowGenerator implements EventHandler {
 		String compYamlLocation = currentProject.getFolder("src").getFolder("main").getFile(currentProject.getName() + ".yaml").getLocation().toString();
 		SwaggerDeserializationResult swaggerDeserialized = new SwaggerParser().readWithInfo(compYamlLocation, null, true);
 		Swagger swagger = swaggerDeserialized.getSwagger();
-		return swagger.getVendorExtensions().get("x-context").toString();
+		return swagger.getBasePath();
 	}
 	
 	private String setCompApiParticipantsString () {

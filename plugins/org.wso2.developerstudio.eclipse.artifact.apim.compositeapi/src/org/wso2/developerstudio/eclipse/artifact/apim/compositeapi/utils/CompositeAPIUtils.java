@@ -137,7 +137,7 @@ public class CompositeAPIUtils {
                 "\"callbackUrl\": \"www.google.lk\",\n" +
                 "\"clientName\": \"" + randomClientName + "\",\n" +
                 "\"tokenScope\": \"Production\",\n" +
-                "\"owner\": \"admin\",\n" +
+                "\"owner\": \"" + username + "\",\n" +
                 "\"grantType\": \"password refresh_token\",\n" +
                 "\"saasApp\": true\n" +
                 "}";
@@ -191,7 +191,7 @@ public class CompositeAPIUtils {
 		 String prettyJSONString = responseContent.toString();
 		SwaggerDeserializationResult swaggerDeserialized = new SwaggerParser().readWithInfo(prettyJSONString);
 		Swagger swaggerContent = swaggerDeserialized.getSwagger();
-		swaggerContent.setVendorExtension("x-context", api.getContext());
+		swaggerContent.setBasePath(api.getContext());
 		Yaml yaml = new Yaml();
 		  // get json string
 		 

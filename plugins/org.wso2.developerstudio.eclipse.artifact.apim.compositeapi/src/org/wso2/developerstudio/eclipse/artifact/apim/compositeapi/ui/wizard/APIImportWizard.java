@@ -176,7 +176,7 @@ public class APIImportWizard extends WizardPage {
 		pwd.setSize(300,40);
 		pwd.setLocation(SWT.BEGINNING, SWT.CENTER);
 		pwd.setText("Password");
-		password = new Text(container, SWT.BORDER);
+		password = new Text(container, SWT.PASSWORD | SWT.BORDER);
 		GridData gd_txtpw = new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1);
 		gd_txtPath.widthHint = 300;
 		password.setLayoutData(gd_txtpw);
@@ -281,7 +281,7 @@ public class APIImportWizard extends WizardPage {
 		}
 		return null;
 	}
-
+	
 	private void validate() {
 		if ((getCloudConnectorPath() == null || getCloudConnectorPath().equals(""))) {
 			setErrorMessage("Please specify a connector path");
