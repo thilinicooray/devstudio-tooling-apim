@@ -41,28 +41,146 @@ import io.swagger.models.Swagger;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.parser.util.SwaggerDeserializationResult;
 
+/**
+ * Util class for API Composition
+ */
 public class CompositeAPIUtils {
-	//Implemented for km url == gw url
+
+    private static final IDeveloperStudioLog log=Logger.getLog(Activator.PLUGIN_ID);
+	//Implemented assuming store URL and keymanager URL are same
+    //TODO : how to retrieve keymanager URL
 	private static String consumeKey;
 	private static String consumerSecret;
 	private static String storeUrl;
 	private static String username;
 	private static String password;
-	
-	public static List<API> getAPIsFromStore(String url, String username1,
-			String password1) {
+    private static final String API_VIEW_SCOPE = "apim:api_view";
+    private static final String CLIENT_REG_CONTEXT = "/client-registration/v0.9/register";
+
+	/**
+     * Retrieve API list from API Manager store
+     *
+     * @param url  API Manager store URL
+     * @param username username of the API Importer
+     * @param password password of the importer
+     * @return published API list in the given store
+     */
+    public static List<API> getAPIsFromStore(String url, String username, String password) {
 		storeUrl = url;
 		username = username1;
 		password = password1;
+        // set truststore for secured connection between API Manager and DevStudio
 		setTrustore();
+        // register oauth application for API invocations
 		Map<String, String> dataMap = registerOAuthApplication(url, username, password);
-		String accessToken = generateOAuthAccessToken("apim:api_view", dataMap, url, username, password);
-		
+        // retrieve access token for REST API invocations
+		String accessToken = generateOAuthAccessToken(API_VIEW_SCOPE, dataMap, url, username, password);
+		// get published APIs
 		List<API> APIs = getAPIs(url, accessToken);
 		
 		return APIs;
 		
 	}
+
+	/**
+     * Set trust store
+     */
+    private static void setTrustore(){
+        SSLContext sc = null;
+        try {
+            sc = SSLContext.getInstance("SSL");
+        } catch (NoSuchAlgorithmException e1) {
+            String msg = "Error occurred while retrieving SSL context";
+            log.error(msg, e1);
+        }
+        // Create empty HostnameVerifier
+        HostnameVerifier hv = new HostnameVerifier() {
+            public boolean verify(String arg0, SSLSession arg1) {
+                return true;
+            }
+        };
+        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+
+            @Override
+            public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                    throws CertificateException {
+                return;
+            }
+
+            @Override
+            public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                    throws CertificateException {
+                return;
+            }
+
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        } };
+        try {
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        } catch (KeyManagementException e) {
+            String msg = "Error occurred while initializing SSL context";
+            log.error(msg, e);
+        }
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        HttpsURLConnection.setDefaultHostnameVerifier(hv);
+    }
+
+	/**
+     * Register an oauth application
+     *
+     * @param keyManger Url  URL of the key manager
+     * @param username username
+     * @param password password
+     * @return
+     */
+    private  static Map<String, String> registerOAuthApplication(String keyMangerUrl, String username, String password)
+    {
+
+        String dcrEndpointURL = keyMangerUrl + CLIENT_REG_CONTEXT;
+
+        //use a random name for client to avoid conflicts in application(s)
+        String randomClientName = RandomStringUtils.randomAlphanumeric(6);
+        String applicationRequestBody = "{\n" +
+                                        "\"callbackUrl\": \"www.wso2.com\",\n" +
+                                        "\"clientName\": \"" + randomClientName + "\",\n" +
+                                        "\"tokenScope\": \"Production\",\n" +
+                                        "\"owner\": \"" + username + "\",\n" +
+                                        "\"grantType\": \"password refresh_token\",\n" +
+                                        "\"saasApp\": true\n" +
+                                        "}";
+
+        Map<String, String> dcrRequestHeaders = new HashMap<String, String>();
+        Map<String, String> dataMap = new HashMap<String, String>();
+
+        try {
+            String usernamePw = username + ":" + password;
+            //Basic Auth header is used for only to get token
+            byte[] encodedBytes = Base64.encodeBase64(usernamePw.getBytes("UTF-8"));
+            dcrRequestHeaders.put("Authorization", "Basic " + new String(encodedBytes, "UTF-8"));
+
+            //Set content type as its mandatory
+            dcrRequestHeaders.put("Content-Type", "application/json");
+            HTTPResponse clientregRes = doPost(new URL(dcrEndpointURL), applicationRequestBody, dcrRequestHeaders);
+            JSONObject clientRegistrationResponse = new JSONObject(clientregRes);
+            String consumerKey = new JSONObject(clientRegistrationResponse.getString("data"))
+                    .get("clientId").toString();
+            String consumerSecret = new JSONObject
+                    (clientRegistrationResponse.getString("data")).
+                                                                          get("clientSecret").toString();
+
+            //give 2 second duration to create consumer key and consumer secret
+            Thread.sleep(2000);
+            dataMap.put("consumerKey", consumerKey);
+            dataMap.put("consumerSecret", consumerSecret);
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return dataMap;
+    }
 	
 	private static List<API> getAPIs(String url, String accessToken) {
 		List<API> apis = new ArrayList<API>();
@@ -127,50 +245,7 @@ public class CompositeAPIUtils {
         return null;
 	}
 
-	private  static Map<String, String> registerOAuthApplication(String keyMangerUrl, String username, String password) {
 
-        String dcrEndpointURL = keyMangerUrl + "/client-registration/v0.9/register";
-
-        //use a random name for client to avoid conflicts in application(s)
-        String randomClientName = RandomStringUtils.randomAlphanumeric(6);
-        String applicationRequestBody = "{\n" +
-                "\"callbackUrl\": \"www.google.lk\",\n" +
-                "\"clientName\": \"" + randomClientName + "\",\n" +
-                "\"tokenScope\": \"Production\",\n" +
-                "\"owner\": \"" + username + "\",\n" +
-                "\"grantType\": \"password refresh_token\",\n" +
-                "\"saasApp\": true\n" +
-                "}";
-
-        Map<String, String> dcrRequestHeaders = new HashMap<String, String>();
-        Map<String, String> dataMap = new HashMap<String, String>();
-
-        try {
-        	String usernamePw = username + ":" + password;
-            //Basic Auth header is used for only to get token
-            byte[] encodedBytes = Base64.encodeBase64(usernamePw.getBytes("UTF-8"));
-            dcrRequestHeaders.put("Authorization", "Basic " + new String(encodedBytes, "UTF-8"));
-
-            //Set content type as its mandatory
-            dcrRequestHeaders.put("Content-Type", "application/json");
-            HTTPResponse clientregRes = doPost(new URL(dcrEndpointURL), applicationRequestBody, dcrRequestHeaders);
-            JSONObject clientRegistrationResponse = new JSONObject(clientregRes);
-            String consumerKey = new JSONObject(clientRegistrationResponse.getString("data"))
-                    .get("clientId").toString();
-            String consumerSecret = new JSONObject
-                    (clientRegistrationResponse.getString("data")).
-                    get("clientSecret").toString();
-
-            //give 2 second duration to create consumer key and consumer secret
-            Thread.sleep(2000);
-            dataMap.put("consumerKey", consumerKey);
-            dataMap.put("consumerSecret", consumerSecret);
-
-        } catch (Exception e){
-        	e.printStackTrace();
-        }
-        return dataMap;
-    }
 	
 	public static String getApiSwaggerDefinition(API api){
 		Map<String, String> dataMap = new HashMap<String, String>();
@@ -349,49 +424,4 @@ public class CompositeAPIUtils {
         return ignored1;
     }
 	
-	private static void setTrustore(){
-		SSLContext sc = null;
-		try {
-			sc = SSLContext.getInstance("SSL");
-		} catch (NoSuchAlgorithmException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-        // Create empty HostnameVerifier
-        HostnameVerifier hv = new HostnameVerifier() {
-            public boolean verify(String arg0, SSLSession arg1) {
-                return true;
-            }
-        };
-        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-
-			@Override
-			public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType)
-					throws CertificateException {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType)
-					throws CertificateException {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-        } };
-        try {
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
-		} catch (KeyManagementException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        HttpsURLConnection.setDefaultHostnameVerifier(hv);
-	}
 }

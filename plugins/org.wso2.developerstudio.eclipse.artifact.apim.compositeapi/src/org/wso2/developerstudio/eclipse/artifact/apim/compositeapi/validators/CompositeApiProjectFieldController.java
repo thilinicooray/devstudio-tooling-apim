@@ -12,7 +12,8 @@ import org.wso2.developerstudio.eclipse.platform.ui.validator.CommonFieldValidat
 
 public class CompositeApiProjectFieldController extends AbstractFieldController {
 	
-	private final static Pattern ADDITIONAL_FOLDERS_PATTERN = Pattern.compile("([\\/\\\\]repository[\\/\\\\]deployment[\\/\\\\]server)$");
+	private final static Pattern ADDITIONAL_FOLDERS_PATTERN =
+			Pattern.compile("([\\/\\\\]repository[\\/\\\\]deployment[\\/\\\\]server)$");
 	
 	public void validate(String modelProperty, Object value, ProjectDataModel model)
 	        throws FieldValidationException {

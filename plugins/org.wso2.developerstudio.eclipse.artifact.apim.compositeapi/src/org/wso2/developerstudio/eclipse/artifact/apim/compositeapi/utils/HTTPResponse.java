@@ -2,6 +2,9 @@ package org.wso2.developerstudio.eclipse.artifact.apim.compositeapi.utils;
 
 import java.util.Map;
 
+/**
+ * Model class for HTTP Response
+ */
 public class HTTPResponse {
     private String data;
     private int responseCode;
